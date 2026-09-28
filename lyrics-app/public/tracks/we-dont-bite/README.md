@@ -1,19 +1,33 @@
 # We Don't Bite — bundled track folder
 
-Place **your legally obtained audio** here:
+## Add your MP3 here
 
-| File | Required | Notes |
-| --- | --- | --- |
-| `audio.m4a` | For bundled playback | Also supported: rename in `track.json` to `audio.mp3` |
-| `lyrics.lrc` | Yes (committed) | Line-level sync; enhanced LRC optional |
-| `words.json` | Optional | Word/syllable-accurate overrides (see docs) |
-| `track.json` | Yes | Manifest the app reads |
+Copy your file to **this exact path** (filename must match `track.json`):
 
-Audio files are **gitignored** so we do not commit copyrighted media. Lyrics timing can stay in the repo.
+```text
+lyrics-app/public/tracks/we-dont-bite/audio.mp3
+```
 
-Quick add:
+From repo root:
 
 ```bash
-cp ~/Music/We-Dont-Bite.m4a ./audio.m4a
-npm run validate:tracks
+cp "/path/to/We Don't Bite.mp3" lyrics-app/public/tracks/we-dont-bite/audio.mp3
 ```
+
+Then verify:
+
+```bash
+cd lyrics-app
+npm run validate:tracks
+npm run dev
+```
+
+Open the app → track loads automatically (no need to use **Load audio** if the file is present).
+
+| File | In git? |
+| --- | --- |
+| `lyrics.lrc` | Yes (your timings) |
+| `track.json` | Yes |
+| `audio.mp3` | **No** — gitignored; only on your machine / deploy |
+
+If your file has a different name, either rename to `audio.mp3` or change `"audioFile"` in `track.json`.

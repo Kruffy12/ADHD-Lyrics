@@ -102,6 +102,11 @@ Register new slugs in `src/lib/tracks/loadTrack.ts` → `TRACK_CATALOG`.
 
 Send: **title, artist, slug, LRC file (or link), audio file (or say you’ll drop it locally), and optional word-sync level.** Use the template in `ADDING_A_TRACK.md`.
 
+## Project layout
+
+- `public/tracks/<slug>/` — bundled lyrics + local audio
+- `src/lib/lyrics/parseLrc.ts` — LRC + enhanced word tags
+- `src/lib/tracks/loadTrack.ts` — track catalog + loader
 - `src/lib/audio/useAudioEngine.ts` — playback + analyser metrics
 - `src/lib/themes.ts` — five swipeable aesthetics
 - `src/components/LyricExperience.tsx` — orchestration

@@ -6,7 +6,7 @@ type TimedWord = TimedLine["words"][number];
 export function moodFor(text: string, index: number): TimedLine["mood"] {
   const upper = text.toUpperCase();
   if (index < 2) return "intro";
-  if (upper.includes("WELCOME HOME") || upper.includes("WE DON'T BITE"))
+  if (upper.includes("WELCOME HOME") || upper.includes("WE DON'T BITE") || upper.includes("DON'T BITE"))
     return "chorus";
   if (
     upper.includes("NIGHTMARES") ||
