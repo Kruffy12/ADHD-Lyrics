@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     ],
     apple: [
       {
-        url: `${basePath}/icons/apple-touch-icon.png`,
+        url: `${basePath}/apple-touch-icon.png`,
         sizes: "180x180",
         type: "image/png",
       },
@@ -59,13 +59,59 @@ export const viewport: Viewport = {
   ],
 };
 
+const STARTUP_IMAGES = [
+  {
+    href: "/splash/iphone-14-pro-max.png",
+    media:
+      "(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)",
+  },
+  {
+    href: "/splash/iphone-14-pro.png",
+    media:
+      "(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)",
+  },
+  {
+    href: "/splash/iphone-14.png",
+    media:
+      "(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)",
+  },
+  {
+    href: "/splash/iphone-14-plus.png",
+    media:
+      "(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)",
+  },
+  {
+    href: "/splash/iphone-x.png",
+    media:
+      "(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)",
+  },
+  {
+    href: "/splash/iphone-se.png",
+    media:
+      "(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)",
+  },
+];
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${displayNeon.variable} ${displaySoft.variable} ${displayInk.variable} ${displayChrome.variable} ${displayCosmic.variable} h-full`}
     >
-      <body className="min-h-full overflow-hidden bg-black antialiased">{children}</body>
+      <head>
+        <link rel="apple-touch-icon" href={`${basePath}/apple-touch-icon.png`} />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        {STARTUP_IMAGES.map((image) => (
+          <link
+            key={image.href}
+            rel="apple-touch-startup-image"
+            href={`${basePath}${image.href}`}
+            media={image.media}
+          />
+        ))}
+      </head>
+      <body className="min-h-full overflow-hidden bg-[#050508] antialiased">{children}</body>
     </html>
   );
 }
