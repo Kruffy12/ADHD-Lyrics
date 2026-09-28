@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Sensory Lyrics">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff2d95"/>
+      <stop offset="100%" stop-color="#00f5ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#050508"/>
+  <circle cx="256" cy="256" r="148" fill="url(#g)" opacity="0.35"/>
+  <path d="M170 290c0-48 38-86 86-86s86 38 86 86" fill="none" stroke="#fff" stroke-width="22" stroke-linecap="round"/>
+  <circle cx="210" cy="230" r="16" fill="#fff"/>
+  <circle cx="302" cy="230" r="16" fill="#fff"/>
+</svg>
