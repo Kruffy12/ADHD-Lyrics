@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     process.env.NEXT_PUBLIC_BASE_PATH?.replace(/\/$/, "") ?? "";
 
   return {
-    name: "Sensory Lyrics — We Don't Bite",
+    name: "Sensory Lyrics",
     short_name: "Sensory Lyrics",
     description:
       "Rhythm-reactive, swipeable lyric visuals for iOS Safari.",
@@ -19,9 +19,21 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#050508",
     icons: [
       {
-        src: `${basePath}/icons/icon.svg`,
-        sizes: "any",
-        type: "image/svg+xml",
+        src: `${basePath}/icons/icon-192.png`,
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: `${basePath}/icons/icon-512.png`,
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: `${basePath}/icons/icon-512.png`,
+        sizes: "512x512",
+        type: "image/png",
         purpose: "maskable",
       },
     ],
