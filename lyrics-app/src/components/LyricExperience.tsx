@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { AnimatePresence, motion, PanInfo } from "framer-motion";
 import { VISUAL_THEMES } from "@/lib/themes";
+import { themeChrome } from "@/lib/themeChrome";
 import { findActiveLine } from "@/lib/lyrics/sync";
 import {
   TRACK_CATALOG,
@@ -19,19 +20,20 @@ const SWIPE_THRESHOLD = 80;
 
 export function LyricExperience() {
   const [themeIndex, setThemeIndex] = useState(0);
-  const [manualLineIndex, setManualLineIndex] = useState<number | null>(null);
+  const [controlsVisible, setControlsVisible] = useState(true);
   const [holdActive, setHoldActive] = useState(false);
-  const [hyperfixationOn, setHyperfixationOn] = useState(true);
-  const [uiPeek, setUiPeek] = useState(false);
+  const [autoHideChorus, setAutoHideChorus] = useState(true);
   const [trackIndex, setTrackIndex] = useState(0);
   const [loaded, setLoaded] = useState<LoadedTrack | null>(null);
   const [lines, setLines] = useState<TimedLine[]>([]);
   const [meta, setMeta] = useState<TrackMeta | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const holdTimer = useRef<number | null>(null);
-  const peekTimer = useRef<number | null>(null);
+  const didSwipe = useRef(false);
+  const pointerStart = useRef<{ x: number; y: number } | null>(null);
 
   const theme = VISUAL_THEMES[themeIndex];
+  const chrome = themeChrome(theme);
   const catalogEntry = TRACK_CATALOG[trackIndex];
 
   const {
@@ -70,33 +72,26 @@ export function LyricExperience() {
     void loadUrl(loaded.audioUrl);
   }, [loaded?.audioUrl, loadUrl]);
 
-  const synced = useMemo(() => {
-    const active = findActiveLine(lines, state.currentTimeMs);
-    if (manualLineIndex != null && !state.isPlaying) {
-      const line = lines[manualLineIndex];
-      return line ? { line, index: manualLineIndex } : active;
-    }
-    return active;
-  }, [lines, manualLineIndex, state.currentTimeMs, state.isPlaying]);
+  const synced = useMemo(
+    () => findActiveLine(lines, state.currentTimeMs),
+    [lines, state.currentTimeMs],
+  );
 
-  const immersive =
-    hyperfixationOn &&
+  const chorusAutoHide =
+    autoHideChorus &&
     state.isPlaying &&
-    synced?.line.mood === "chorus" &&
-    !uiPeek;
+    synced?.line.mood === "chorus";
 
-  const advanceLine = useCallback(() => {
-    const base = synced?.index ?? 0;
-    const next = Math.min(base + 1, lines.length - 1);
-    setManualLineIndex(next);
-    seekMs(lines[next].startMs);
-  }, [lines, seekMs, synced?.index]);
+  const focusMode = !controlsVisible || chorusAutoHide;
 
   const onThemeSwipe = useCallback((_: unknown, info: PanInfo) => {
-    if (info.offset.x < -SWIPE_THRESHOLD) {
-      setThemeIndex((i) => Math.min(i + 1, VISUAL_THEMES.length - 1));
-    } else if (info.offset.x > SWIPE_THRESHOLD) {
-      setThemeIndex((i) => Math.max(i - 1, 0));
+    if (Math.abs(info.offset.x) >= SWIPE_THRESHOLD) {
+      didSwipe.current = true;
+      if (info.offset.x < -SWIPE_THRESHOLD) {
+        setThemeIndex((i) => Math.min(i + 1, VISUAL_THEMES.length - 1));
+      } else {
+        setThemeIndex((i) => Math.max(i - 1, 0));
+      }
     }
   }, []);
 
@@ -111,20 +106,41 @@ export function LyricExperience() {
   }, [setIntensify]);
 
   const onPlayToggle = useCallback(() => {
-    setManualLineIndex(null);
     toggle();
   }, [toggle]);
 
-  const revealUiBriefly = useCallback(() => {
-    setUiPeek(true);
-    if (peekTimer.current) window.clearTimeout(peekTimer.current);
-    peekTimer.current = window.setTimeout(() => setUiPeek(false), 3200);
-  }, []);
-
   const onSelectTrack = useCallback((index: number) => {
     setTrackIndex(index);
-    setManualLineIndex(null);
   }, []);
+
+  const handleStagePointerDown = (e: ReactPointerEvent) => {
+    pointerStart.current = { x: e.clientX, y: e.clientY };
+    holdTimer.current = window.setTimeout(onHoldStart, 280);
+  };
+
+  const handleStagePointerUp = (e: ReactPointerEvent) => {
+    if (holdTimer.current) window.clearTimeout(holdTimer.current);
+    onHoldEnd();
+
+    if (didSwipe.current) {
+      didSwipe.current = false;
+      return;
+    }
+
+    const start = pointerStart.current;
+    pointerStart.current = null;
+    if (!start) return;
+    if (Math.hypot(e.clientX - start.x, e.clientY - start.y) > 14) return;
+
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const nx = (e.clientX - rect.left) / rect.width;
+    const ny = (e.clientY - rect.top) / rect.height;
+    const inCenter = nx > 0.18 && nx < 0.82 && ny > 0.12 && ny < 0.88;
+
+    if (inCenter) {
+      setControlsVisible((v) => !v);
+    }
+  };
 
   if (loadError) {
     return (
@@ -150,7 +166,7 @@ export function LyricExperience() {
 
   return (
     <div
-      className="relative flex h-[100dvh] flex-col overflow-hidden text-white"
+      className="relative flex h-[100dvh] flex-col overflow-hidden"
       style={{ color: theme.palette.text }}
     >
       <audio ref={audioRef} preload="metadata" playsInline />
@@ -164,27 +180,39 @@ export function LyricExperience() {
       />
 
       <AnimatePresence>
-        {!immersive && (
+        {controlsVisible && !chorusAutoHide && (
           <motion.header
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
+            exit={{ opacity: 0, y: -16 }}
             className="relative z-20 flex items-start justify-between px-5 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))]"
           >
             <div>
-              <p className="text-[11px] uppercase tracking-[0.28em] text-white/50">
-                {hyperfixationOn ? "Hyperfixation · chorus drops hide chrome" : "Full chrome"}
+              <p
+                className="text-[10px] uppercase tracking-[0.28em]"
+                style={{ color: chrome.headerSubtext }}
+              >
+                Tap center · lyrics focus
               </p>
-              <h1 className="text-lg font-semibold">{meta.title}</h1>
-              <p className="text-sm text-white/60">{meta.artist}</p>
+              <h1
+                className="text-lg font-semibold"
+                style={{ color: chrome.headerTitle }}
+              >
+                {meta.title}
+              </h1>
+              <p className="text-sm" style={{ color: chrome.headerSubtext }}>
+                {meta.artist}
+              </p>
             </div>
-            <div className="flex gap-1 pt-1">
+            <div className="flex gap-1.5 pt-1">
               {VISUAL_THEMES.map((t, i) => (
                 <span
                   key={t.id}
-                  className={`h-1.5 w-1.5 rounded-full transition ${
-                    i === themeIndex ? "bg-white" : "bg-white/25"
-                  }`}
+                  className="h-1.5 w-1.5 rounded-full transition"
+                  style={{
+                    background:
+                      i === themeIndex ? chrome.dotActive : chrome.dotIdle,
+                  }}
                 />
               ))}
             </div>
@@ -196,28 +224,12 @@ export function LyricExperience() {
         className="relative z-10 flex flex-1 touch-pan-y flex-col"
         drag="x"
         dragConstraints={{ left: 0, right: 0 }}
-        dragElastic={0.08}
+        dragElastic={0.06}
         onDragEnd={onThemeSwipe}
-        onPointerDown={() => {
-          holdTimer.current = window.setTimeout(onHoldStart, 220);
-        }}
-        onPointerUp={() => {
-          if (holdTimer.current) window.clearTimeout(holdTimer.current);
-          onHoldEnd();
-        }}
-        onPointerLeave={() => {
-          if (holdTimer.current) window.clearTimeout(holdTimer.current);
-          onHoldEnd();
-        }}
-        onClick={(e) => {
-          if (immersive) {
-            revealUiBriefly();
-            return;
-          }
-          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          if (x > rect.width * 0.62) advanceLine();
-        }}
+        onPointerDown={handleStagePointerDown}
+        onPointerUp={handleStagePointerUp}
+        onPointerCancel={onHoldEnd}
+        onPointerLeave={onHoldEnd}
       >
         {synced && (
           <LyricLine
@@ -226,56 +238,65 @@ export function LyricExperience() {
             theme={theme}
             energy={state.metrics.energy}
             intensify={state.intensify}
+            focusMode={focusMode}
           />
         )}
-        {!immersive && (
-          <p className="pointer-events-none px-6 text-center text-[11px] text-white/40">
-            Swipe ↔ styles · Scrub · Tap right to flip line · Long-press intensify
-          </p>
-        )}
-        {immersive && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.35 }}
-            className="pointer-events-none px-6 text-center text-[10px] uppercase tracking-[0.3em] text-white/50"
+
+        <AnimatePresence>
+          {focusMode && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.4 }}
+              exit={{ opacity: 0 }}
+              className="pointer-events-none px-6 text-center text-[10px] uppercase tracking-[0.32em]"
+              style={{ color: theme.palette.textMuted }}
+            >
+              Tap center for controls
+            </motion.p>
+          )}
+        </AnimatePresence>
+
+        {!focusMode && (
+          <p
+            className="pointer-events-none px-6 pb-2 text-center text-[10px]"
+            style={{ color: theme.palette.textMuted }}
           >
-            Tap for controls
-          </motion.p>
+            Swipe ↔ change style · Long-press intensify
+          </p>
         )}
       </motion.main>
 
-      <ControlDock
-        immersive={immersive}
-        isPlaying={state.isPlaying}
-        hasSource={state.hasSource}
-        bundledAudio={loaded?.bundledAudioAvailable ?? false}
-        currentMs={state.currentTimeMs}
-        durationMs={state.durationMs || meta.durationMs}
-        themeName={theme.name}
-        themeIndex={themeIndex}
-        themeCount={VISUAL_THEMES.length}
-        holdActive={holdActive}
-        hyperfixationOn={hyperfixationOn}
-        onToggleHyperfixation={() => setHyperfixationOn((v) => !v)}
-        tracks={TRACK_CATALOG.map((t) => ({
-          id: t.id,
-          label:
-            t.id === meta.id
-              ? `${meta.title} — ${meta.artist}`
-              : t.id.replace(/-/g, " "),
-        }))}
-        trackIndex={trackIndex}
-        onSelectTrack={onSelectTrack}
-        onToggle={onPlayToggle}
-        onSeek={(ms) => {
-          setManualLineIndex(null);
-          seekMs(ms);
-        }}
-        onAdvanceLine={advanceLine}
-        onLoadFile={loadFile}
-        sourceNote={meta.sourceNote}
-        playbackError={state.playbackError}
-      />
+      <AnimatePresence>
+        {!focusMode && (
+          <ControlDock
+            theme={theme}
+            isPlaying={state.isPlaying}
+            hasSource={state.hasSource}
+            bundledAudio={loaded?.bundledAudioAvailable ?? false}
+            currentMs={state.currentTimeMs}
+            durationMs={state.durationMs || meta.durationMs}
+            themeIndex={themeIndex}
+            themeCount={VISUAL_THEMES.length}
+            holdActive={holdActive}
+            autoHideChorus={autoHideChorus}
+            onToggleAutoHideChorus={() => setAutoHideChorus((v) => !v)}
+            tracks={TRACK_CATALOG.map((t) => ({
+              id: t.id,
+              label:
+                t.id === meta.id
+                  ? `${meta.title} — ${meta.artist}`
+                  : t.id.replace(/-/g, " "),
+            }))}
+            trackIndex={trackIndex}
+            onSelectTrack={onSelectTrack}
+            onToggle={onPlayToggle}
+            onSeek={seekMs}
+            onLoadFile={loadFile}
+            sourceNote={meta.sourceNote}
+            playbackError={state.playbackError}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

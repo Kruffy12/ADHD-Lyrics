@@ -49,7 +49,7 @@ export const VISUAL_THEMES: VisualTheme[] = [
       accent: "#1a1a1a",
       accentAlt: "#c41e3a",
       text: "#121212",
-      textMuted: "#5c5348",
+      textMuted: "#3d362e",
       glow: "rgba(196, 30, 58, 0.25)",
     },
     typography: {

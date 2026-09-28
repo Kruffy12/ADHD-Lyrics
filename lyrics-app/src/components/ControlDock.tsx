@@ -1,35 +1,27 @@
 "use client";
 
-import { motion } from "framer-motion";
-import {
-  Pause,
-  Play,
-  SkipForward,
-  Upload,
-  Disc3,
-  Hand,
-  Focus,
-} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Pause, Play, Upload, Disc3, Hand, Focus } from "lucide-react";
+import type { VisualTheme } from "@/lib/types";
+import { themeChrome } from "@/lib/themeChrome";
 
 interface ControlDockProps {
-  immersive?: boolean;
+  theme: VisualTheme;
   isPlaying: boolean;
   hasSource: boolean;
   bundledAudio: boolean;
   currentMs: number;
   durationMs: number;
-  themeName: string;
   themeIndex: number;
   themeCount: number;
   holdActive: boolean;
-  hyperfixationOn: boolean;
-  onToggleHyperfixation: () => void;
+  autoHideChorus: boolean;
+  onToggleAutoHideChorus: () => void;
   tracks: Array<{ id: string; label: string }>;
   trackIndex: number;
   onSelectTrack: (index: number) => void;
   onToggle: () => void;
   onSeek: (ms: number) => void;
-  onAdvanceLine: () => void;
   onLoadFile: (file: File) => void;
   sourceNote: string;
   playbackError?: string | null;
@@ -43,71 +35,55 @@ function formatTime(ms: number) {
 }
 
 export function ControlDock({
-  immersive = false,
+  theme,
   isPlaying,
   hasSource,
   bundledAudio,
   currentMs,
   durationMs,
-  themeName,
   themeIndex,
   themeCount,
   holdActive,
-  hyperfixationOn,
-  onToggleHyperfixation,
+  autoHideChorus,
+  onToggleAutoHideChorus,
   tracks,
   trackIndex,
   onSelectTrack,
   onToggle,
   onSeek,
-  onAdvanceLine,
   onLoadFile,
   sourceNote,
   playbackError,
 }: ControlDockProps) {
+  const chrome = themeChrome(theme);
   const progress = durationMs > 0 ? currentMs / durationMs : 0;
 
-  if (immersive) {
-    return (
-      <div className="relative z-30 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2">
-        <input
-          aria-label="Scrub timeline"
-          type="range"
-          min={0}
-          max={1000}
-          value={Math.round(progress * 1000)}
-          onChange={(e) =>
-            onSeek((Number(e.target.value) / 1000) * durationMs)
-          }
-          className="h-0.5 w-full appearance-none rounded-full bg-white/20 accent-white"
-        />
-        <div className="mt-3 flex justify-center">
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.94 }}
-            onClick={onToggle}
-            disabled={!hasSource}
-            className="rounded-full bg-white/90 px-6 py-3 text-black disabled:opacity-40"
-          >
-            {isPlaying ? (
-              <Pause className="h-5 w-5" />
-            ) : (
-              <Play className="h-5 w-5" />
-            )}
-          </motion.button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="relative z-30 border-t border-white/10 bg-black/35 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl">
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-[11px] uppercase tracking-[0.16em] text-white/60">
-        <span>{themeName}</span>
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 20 }}
+      className="relative z-30 border-t px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl"
+      style={{
+        background: chrome.dockBg,
+        borderColor: chrome.dockBorder,
+        color: chrome.dockText,
+      }}
+    >
+      <div
+        className="mb-2 flex flex-wrap items-center justify-between gap-2 text-[11px] uppercase tracking-[0.16em]"
+        style={{ color: chrome.dockTextMuted }}
+      >
+        <span>{theme.name}</span>
         <select
           value={trackIndex}
           onChange={(e) => onSelectTrack(Number(e.target.value))}
-          className="max-w-[55%] truncate rounded-md border border-white/15 bg-black/40 px-2 py-1 text-[11px] normal-case text-white"
+          className="max-w-[55%] truncate rounded-md border px-2 py-1 text-[11px] normal-case"
+          style={{
+            borderColor: chrome.dockBorder,
+            background: chrome.dockControlBg,
+            color: chrome.dockText,
+          }}
           aria-label="Select track"
         >
           {tracks.map((t, i) => (
@@ -121,25 +97,28 @@ export function ControlDock({
       <div className="mb-2 flex items-center justify-between gap-2">
         <button
           type="button"
-          onClick={onToggleHyperfixation}
-          className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] ${
-            hyperfixationOn
-              ? "bg-violet-500/30 text-violet-100"
-              : "border border-white/15 text-white/60"
-          }`}
+          onClick={onToggleAutoHideChorus}
+          className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px]"
+          style={{
+            background: autoHideChorus
+              ? `${theme.palette.accentAlt}33`
+              : chrome.dockControlBg,
+            color: autoHideChorus ? theme.palette.text : chrome.dockTextMuted,
+            border: `1px solid ${chrome.dockBorder}`,
+          }}
         >
           <Focus className="h-3 w-3" />
-          Hyperfixation
+          Auto-hide chorus
         </button>
-        <span className="text-[10px] text-white/45">
-          Style {themeIndex + 1}/{themeCount}
+        <span className="text-[10px]" style={{ color: chrome.dockTextMuted }}>
+          Style {themeIndex + 1}/{themeCount} · swipe ↔
         </span>
       </div>
 
       <div className="mb-3 flex items-center gap-3">
         <Disc3
           className={`h-5 w-5 shrink-0 ${isPlaying ? "animate-spin" : ""}`}
-          style={{ animationDuration: "4s" }}
+          style={{ color: chrome.dockTextMuted, animationDuration: "4s" }}
         />
         <input
           aria-label="Scrub timeline"
@@ -150,15 +129,28 @@ export function ControlDock({
           onChange={(e) =>
             onSeek((Number(e.target.value) / 1000) * durationMs)
           }
-          className="h-1 flex-1 appearance-none rounded-full bg-white/15 accent-white"
+          className="h-1 flex-1 appearance-none rounded-full"
+          style={{
+            background: chrome.rangeTrack,
+            accentColor: theme.palette.accentAlt,
+          }}
         />
-        <span className="w-16 text-right text-xs tabular-nums text-white/70">
+        <span
+          className="w-16 text-right text-xs tabular-nums"
+          style={{ color: chrome.dockTextMuted }}
+        >
           {formatTime(currentMs)}
         </span>
       </div>
 
-      <div className="flex items-center justify-between gap-2">
-        <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/15 px-3 py-2 text-xs text-white/80">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <label
+          className="inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-2 text-xs"
+          style={{
+            borderColor: chrome.dockBorder,
+            color: chrome.dockText,
+          }}
+        >
           <Upload className="h-4 w-4" />
           {bundledAudio ? "Replace audio" : "Load audio"}
           <input
@@ -172,50 +164,47 @@ export function ControlDock({
           />
         </label>
 
-        <div className="flex items-center gap-2">
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.92 }}
-            onClick={onAdvanceLine}
-            className="rounded-full border border-white/15 p-3 text-white/90"
-            aria-label="Tap to advance line"
-          >
-            <SkipForward className="h-5 w-5" />
-          </motion.button>
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.94 }}
-            onClick={onToggle}
-            disabled={!hasSource}
-            className="rounded-full bg-white px-5 py-3 text-black disabled:opacity-40"
-            aria-label={isPlaying ? "Pause" : "Play"}
-          >
-            {isPlaying ? (
-              <Pause className="h-5 w-5" />
-            ) : (
-              <Play className="h-5 w-5" />
-            )}
-          </motion.button>
-        </div>
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.94 }}
+          onClick={onToggle}
+          disabled={!hasSource}
+          className="rounded-full px-6 py-3 disabled:opacity-40"
+          style={{
+            background: chrome.dockPlayBg,
+            color: chrome.dockPlayFg,
+          }}
+          aria-label={isPlaying ? "Pause" : "Play"}
+        >
+          {isPlaying ? (
+            <Pause className="h-5 w-5" />
+          ) : (
+            <Play className="h-5 w-5" />
+          )}
+        </motion.button>
 
         <div
-          className={`inline-flex items-center gap-1 rounded-full px-3 py-2 text-[11px] uppercase tracking-wider ${
-            holdActive
-              ? "bg-white text-black"
-              : "border border-white/15 text-white/70"
-          }`}
+          className="inline-flex items-center gap-1 rounded-full px-3 py-2 text-[11px] uppercase tracking-wider"
+          style={{
+            background: holdActive ? chrome.dockPlayBg : chrome.dockControlBg,
+            color: holdActive ? chrome.dockPlayFg : chrome.dockTextMuted,
+            border: holdActive ? "none" : `1px solid ${chrome.dockBorder}`,
+          }}
         >
           <Hand className="h-3.5 w-3.5" />
           Hold
         </div>
       </div>
-      <p className="mt-2 text-center text-[10px] leading-relaxed text-white/45">
+      <p
+        className="mt-2 text-center text-[10px] leading-relaxed"
+        style={{ color: chrome.dockTextMuted }}
+      >
         {playbackError ? (
-          <span className="text-amber-200/90">{playbackError}</span>
+          <span style={{ color: theme.palette.accentAlt }}>{playbackError}</span>
         ) : (
           sourceNote
         )}
       </p>
-    </div>
+    </motion.div>
   );
 }
