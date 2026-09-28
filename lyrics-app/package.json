@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:gh-pages": "NEXT_PUBLIC_BASE_PATH=/ADHD-Lyrics next build",
     "start": "next start",
     "lint": "eslint",
     "validate:tracks": "node scripts/validate-track.mjs"

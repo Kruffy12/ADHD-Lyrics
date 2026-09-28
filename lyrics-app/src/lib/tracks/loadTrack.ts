@@ -1,4 +1,5 @@
 import type { TimedLine, TrackMeta } from "../types";
+import { withBasePath } from "../basePath";
 import { enrichParsedLines, type WordsJsonFile } from "../lyrics/enrichLines";
 import { parseLrc } from "../lyrics/parseLrc";
 
@@ -31,10 +32,12 @@ export const TRACK_CATALOG: TrackCatalogEntry[] = [
 ];
 
 export function trackBasePath(folder: string) {
-  return `/tracks/${folder}`;
+  return withBasePath(`/tracks/${folder}`);
 }
 
-export async function loadTrackBundle(entry: TrackCatalogEntry): Promise<LoadedTrack> {
+export async function loadTrackBundle(
+  entry: TrackCatalogEntry,
+): Promise<LoadedTrack> {
   const base = trackBasePath(entry.folder);
   const manifestRes = await fetch(`${base}/track.json`);
   if (!manifestRes.ok) {

@@ -75,6 +75,13 @@ npm run dev
 
 Open on iPhone: deploy over HTTPS (or LAN HTTPS), **Share → Add to Home Screen**, load your audio copy of the track via **Load audio**.
 
+### GitHub Pages (free HTTPS)
+
+See [`lyrics-app/docs/GITHUB_PAGES.md`](lyrics-app/docs/GITHUB_PAGES.md). Enable **Pages → Source: GitHub Actions**, then open:
+
+**https://kruffy12.github.io/ADHD-Lyrics/**
+
+
 ## MVP controls
 
 - **Swipe ↔** — cycle Neon Club, Soft Glow, Ink & Paper, Liquid Chrome, Cosmic Void

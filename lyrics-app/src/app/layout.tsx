@@ -18,6 +18,9 @@ const displayInk = Libre_Baskerville({ weight: ["400", "700"], subsets: ["latin"
 const displayChrome = Space_Grotesk({ subsets: ["latin"], variable: "--font-display-chrome" });
 const displayCosmic = Syne({ subsets: ["latin"], variable: "--font-display-cosmic" });
 
+const basePath =
+  process.env.NEXT_PUBLIC_BASE_PATH?.replace(/\/$/, "") ?? "";
+
 export const metadata: Metadata = {
   title: "We Don't Bite — Sensory Lyrics",
   description:
@@ -29,10 +32,9 @@ export const metadata: Metadata = {
     title: "Sensory Lyrics",
   },
   formatDetection: { telephone: false },
-  manifest: "/manifest.webmanifest",
   icons: {
-    icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/icons/icon.svg" }],
+    icon: [{ url: `${basePath}/icons/icon.svg`, type: "image/svg+xml" }],
+    apple: [{ url: `${basePath}/icons/icon.svg` }],
   },
 };
 
