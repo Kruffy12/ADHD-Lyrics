@@ -128,6 +128,23 @@ export function useAudioEngine(initialDurationMs: number) {
     [ensureGraph],
   );
 
+  const loadUrl = useCallback(
+    async (url: string) => {
+      const audio = audioRef.current;
+      if (!audio) return;
+      audio.src = url;
+      audio.load();
+      ensureGraph();
+      setState((prev) => ({ ...prev, hasSource: true }));
+      try {
+        await ctxRef.current?.resume();
+      } catch {
+        /* ignored */
+      }
+    },
+    [ensureGraph],
+  );
+
   const play = useCallback(async () => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -165,6 +182,7 @@ export function useAudioEngine(initialDurationMs: number) {
     audioRef,
     state,
     loadFile,
+    loadUrl,
     play,
     pause,
     toggle,

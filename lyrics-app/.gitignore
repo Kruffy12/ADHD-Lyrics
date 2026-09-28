@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Bundled track audio (lyrics + manifest stay committed)
+public/tracks/**/audio.*
+public/tracks/**/*.mp3
+public/tracks/**/*.m4a
+public/tracks/**/*.wav
+public/tracks/**/*.flac

@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import type { TimedLine, VisualTheme } from "@/lib/types";
-import { findActiveWord } from "@/lib/lyrics/we-dont-bite";
+import { findActiveWord } from "@/lib/lyrics/sync";
 import { WordGraphicBurst } from "./WordGraphicBurst";
 
 interface LyricLineProps {

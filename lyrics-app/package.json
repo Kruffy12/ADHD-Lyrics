@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "validate:tracks": "node scripts/validate-track.mjs"
   },
   "dependencies": {
     "framer-motion": "^13.4.4",

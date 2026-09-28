@@ -83,9 +83,25 @@ Open on iPhone: deploy over HTTPS (or LAN HTTPS), **Share → Add to Home Screen
 - **Long-press** — intensify reactive glow + motion
 - **Play** — requires loaded audio (lyrics timing pre-mapped; audio not bundled)
 
-## Project layout
+## Bundling audio + lyrics
 
-- `src/lib/lyrics/we-dont-bite.ts` — timed lines + word splits + keyword graphics
+Each song lives in `lyrics-app/public/tracks/<slug>/`:
+
+| File | In git? | Purpose |
+| --- | --- | --- |
+| `track.json` | Yes | Manifest (audio + lyrics filenames) |
+| `lyrics.lrc` | Yes | Timed lyrics (standard or enhanced word tags) |
+| `words.json` | Optional | Word-accurate overrides |
+| `audio.m4a` | **No** (gitignored) | Your legally obtained audio |
+
+Register new slugs in `src/lib/tracks/loadTrack.ts` → `TRACK_CATALOG`.
+
+**Full guide:** [`lyrics-app/docs/ADDING_A_TRACK.md`](lyrics-app/docs/ADDING_A_TRACK.md)
+
+### How to ask the agent for another song
+
+Send: **title, artist, slug, LRC file (or link), audio file (or say you’ll drop it locally), and optional word-sync level.** Use the template in `ADDING_A_TRACK.md`.
+
 - `src/lib/audio/useAudioEngine.ts` — playback + analyser metrics
 - `src/lib/themes.ts` — five swipeable aesthetics
 - `src/components/LyricExperience.tsx` — orchestration

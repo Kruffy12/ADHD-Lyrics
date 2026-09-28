@@ -43,6 +43,10 @@ export interface TrackMeta {
   artist: string;
   durationMs: number;
   sourceNote: string;
+  /** Public URL prefix, e.g. `/tracks/we-dont-bite` */
+  bundlePath?: string;
+  audioUrl?: string;
+  lyricsUrl?: string;
 }
 
 export interface ReactiveMetrics {

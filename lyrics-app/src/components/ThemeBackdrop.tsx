@@ -56,16 +56,41 @@ export function ThemeBackdrop({
         />
       )}
       {theme.id === "liquid-chrome" && (
+        <>
+          <motion.div
+            className="absolute -inset-x-1/4 top-[20%] h-[45%] opacity-40 blur-3xl"
+            animate={{ x: ["-12%", "12%", "-12%"] }}
+            transition={{ duration: 6 + (1 - energy) * 4, repeat: Infinity, ease: "easeInOut" }}
+            style={{
+              background: `linear-gradient(105deg, transparent 10%, ${theme.palette.accent} 45%, ${theme.palette.accentAlt} 55%, transparent 90%)`,
+            }}
+          />
+          <motion.div
+            className="absolute inset-0 opacity-[0.12]"
+            style={{
+              backgroundImage: `repeating-linear-gradient(-12deg, transparent, transparent 24px, ${theme.palette.accent}22 25px)`,
+            }}
+            animate={{ x: [0, 40 + bass * 30, 0] }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+          />
+        </>
+      )}
+      {theme.id === "cosmic-void" && (
         <motion.div
-          className="absolute -inset-x-1/4 top-1/4 h-1/2 opacity-30 blur-3xl"
-          animate={{ x: ["-10%", "10%", "-10%"] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          style={{
-            background: `linear-gradient(90deg, transparent, ${theme.palette.accentAlt}, transparent)`,
+          className="absolute left-1/2 top-[38%] h-48 w-48 -translate-x-1/2 rounded-full border"
+          style={{ borderColor: `${theme.palette.accent}33` }}
+          animate={{
+            rotate: 360,
+            scale: 1 + bass * 0.25,
+            boxShadow: `0 0 ${40 + treble * 60}px ${theme.palette.glow}`,
+          }}
+          transition={{
+            rotate: { duration: 18, repeat: Infinity, ease: "linear" },
+            scale: { duration: 0.2 },
           }}
         />
       )}
-      {theme.id === "cosmic-void" && treble > 0.35 && (
+      {theme.id === "cosmic-void" && treble > 0.28 && (
         <motion.div
           className="absolute inset-0"
           initial={false}
