@@ -32,6 +32,7 @@ interface ControlDockProps {
   onAdvanceLine: () => void;
   onLoadFile: (file: File) => void;
   sourceNote: string;
+  playbackError?: string | null;
 }
 
 function formatTime(ms: number) {
@@ -62,6 +63,7 @@ export function ControlDock({
   onAdvanceLine,
   onLoadFile,
   sourceNote,
+  playbackError,
 }: ControlDockProps) {
   const progress = durationMs > 0 ? currentMs / durationMs : 0;
 
@@ -208,7 +210,11 @@ export function ControlDock({
         </div>
       </div>
       <p className="mt-2 text-center text-[10px] leading-relaxed text-white/45">
-        {sourceNote}
+        {playbackError ? (
+          <span className="text-amber-200/90">{playbackError}</span>
+        ) : (
+          sourceNote
+        )}
       </p>
     </div>
   );

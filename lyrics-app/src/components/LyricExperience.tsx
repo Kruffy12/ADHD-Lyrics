@@ -54,9 +54,6 @@ export function LyricExperience() {
         setLoaded(bundle);
         setLines(bundle.lines);
         setMeta(bundle.meta);
-        if (bundle.bundledAudioAvailable) {
-          await loadUrl(bundle.audioUrl);
-        }
       } catch (e) {
         if (!cancelled) {
           setLoadError(e instanceof Error ? e.message : "Failed to load track");
@@ -66,7 +63,12 @@ export function LyricExperience() {
     return () => {
       cancelled = true;
     };
-  }, [catalogEntry, loadUrl]);
+  }, [catalogEntry]);
+
+  useEffect(() => {
+    if (!loaded?.audioUrl) return;
+    void loadUrl(loaded.audioUrl);
+  }, [loaded?.audioUrl, loadUrl]);
 
   const synced = useMemo(() => {
     const active = findActiveLine(lines, state.currentTimeMs);
@@ -126,17 +128,23 @@ export function LyricExperience() {
 
   if (loadError) {
     return (
-      <div className="flex h-[100dvh] items-center justify-center bg-black px-6 text-center text-white">
-        <p>{loadError}</p>
-      </div>
+      <>
+        <audio ref={audioRef} preload="metadata" playsInline className="sr-only" />
+        <div className="flex h-[100dvh] items-center justify-center bg-black px-6 text-center text-white">
+          <p>{loadError}</p>
+        </div>
+      </>
     );
   }
 
   if (!meta || !lines.length) {
     return (
-      <div className="flex h-[100dvh] items-center justify-center bg-black text-white/70">
-        Loading track…
-      </div>
+      <>
+        <audio ref={audioRef} preload="metadata" playsInline className="sr-only" />
+        <div className="flex h-[100dvh] items-center justify-center bg-black text-white/70">
+          Loading track…
+        </div>
+      </>
     );
   }
 
@@ -266,6 +274,7 @@ export function LyricExperience() {
         onAdvanceLine={advanceLine}
         onLoadFile={loadFile}
         sourceNote={meta.sourceNote}
+        playbackError={state.playbackError}
       />
     </div>
   );

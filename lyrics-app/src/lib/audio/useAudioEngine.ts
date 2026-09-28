@@ -18,6 +18,28 @@ function bandEnergy(data: Uint8Array, start: number, end: number) {
   return sum / ((to - from + 1) * 255);
 }
 
+function waitForAudioMetadata(audio: HTMLAudioElement): Promise<void> {
+  if (audio.readyState >= HTMLMediaElement.HAVE_METADATA) {
+    return Promise.resolve();
+  }
+  return new Promise((resolve, reject) => {
+    const onReady = () => {
+      cleanup();
+      resolve();
+    };
+    const onError = () => {
+      cleanup();
+      reject(new Error("Audio failed to load"));
+    };
+    const cleanup = () => {
+      audio.removeEventListener("loadedmetadata", onReady);
+      audio.removeEventListener("error", onError);
+    };
+    audio.addEventListener("loadedmetadata", onReady);
+    audio.addEventListener("error", onError);
+  });
+}
+
 export interface AudioEngineState {
   isPlaying: boolean;
   currentTimeMs: number;
@@ -25,6 +47,7 @@ export interface AudioEngineState {
   hasSource: boolean;
   metrics: ReactiveMetrics;
   intensify: number;
+  playbackError: string | null;
 }
 
 export function useAudioEngine(initialDurationMs: number) {
@@ -48,6 +71,7 @@ export function useAudioEngine(initialDurationMs: number) {
     hasSource: false,
     metrics: metricsRef.current,
     intensify: 0,
+    playbackError: null,
   });
 
   const ensureGraph = useCallback(() => {
@@ -110,50 +134,56 @@ export function useAudioEngine(initialDurationMs: number) {
     };
   }, [tick]);
 
+  const attachSource = useCallback(async (url: string) => {
+    const audio = audioRef.current;
+    if (!audio) return false;
+    setState((prev) => ({ ...prev, playbackError: null }));
+    audio.src = url;
+    audio.load();
+    try {
+      await waitForAudioMetadata(audio);
+      setState((prev) => ({
+        ...prev,
+        hasSource: true,
+        durationMs: (audio.duration || initialDurationMs / 1000) * 1000,
+      }));
+      return true;
+    } catch {
+      setState((prev) => ({
+        ...prev,
+        hasSource: false,
+        playbackError: "Could not load audio. Try Load audio or check the file.",
+      }));
+      return false;
+    }
+  }, [initialDurationMs]);
+
   const loadFile = useCallback(
     async (file: File) => {
-      const audio = audioRef.current;
-      if (!audio) return;
       const url = URL.createObjectURL(file);
-      audio.src = url;
-      audio.load();
-      ensureGraph();
-      setState((prev) => ({ ...prev, hasSource: true }));
-      try {
-        await ctxRef.current?.resume();
-      } catch {
-        /* user gesture may be required */
-      }
+      await attachSource(url);
     },
-    [ensureGraph],
+    [attachSource],
   );
 
   const loadUrl = useCallback(
-    async (url: string) => {
-      const audio = audioRef.current;
-      if (!audio) return;
-      audio.src = url;
-      audio.load();
-      ensureGraph();
-      setState((prev) => ({ ...prev, hasSource: true }));
-      try {
-        await ctxRef.current?.resume();
-      } catch {
-        /* ignored */
-      }
-    },
-    [ensureGraph],
+    async (url: string) => attachSource(url),
+    [attachSource],
   );
 
   const play = useCallback(async () => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio || !audio.src) return;
     ensureGraph();
     try {
       await ctxRef.current?.resume();
       await audio.play();
+      setState((prev) => ({ ...prev, playbackError: null }));
     } catch {
-      /* ignored */
+      setState((prev) => ({
+        ...prev,
+        playbackError: "Playback blocked — tap Play again (iOS requires a tap).",
+      }));
     }
   }, [ensureGraph]);
 

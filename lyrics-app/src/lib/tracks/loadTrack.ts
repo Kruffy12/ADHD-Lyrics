@@ -71,7 +71,15 @@ export async function loadTrackBundle(
     const head = await fetch(audioUrl, { method: "HEAD" });
     bundledAudioAvailable = head.ok;
   } catch {
-    bundledAudioAvailable = false;
+    /* Safari / some networks mishandle HEAD */
+  }
+  if (!bundledAudioAvailable) {
+    try {
+      const probe = await fetch(audioUrl, { headers: { Range: "bytes=0-1" } });
+      bundledAudioAvailable = probe.ok || probe.status === 206;
+    } catch {
+      bundledAudioAvailable = false;
+    }
   }
 
   const meta: TrackMeta = {
