@@ -1,5 +1,7 @@
 name: Deploy to GitHub Pages
 
+# Publishes lyrics-app/out (includes index.html) to https://kruffy12.github.io/ADHD-Lyrics/
+
 on:
   push:
     branches: [main]
